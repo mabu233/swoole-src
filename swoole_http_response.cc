@@ -571,7 +571,7 @@ static PHP_METHOD(swoole_http_response, end)
 {
     zval *zdata = NULL;
 
-    http_context *ctx = swoole_http_context_get(ZEND_THIS, 0);
+    http_context *ctx = swoole_http_context_get(ZEND_THIS, 1);
     if (UNEXPECTED(!ctx))
     {
         RETURN_FALSE;
@@ -677,7 +677,6 @@ void swoole_http_response_end(http_context *ctx, zval *zdata, zval *return_value
                 if (!ctx->send(ctx, send_body_str, send_body_len))
                 {
                     ctx->close(ctx);
-                    swoole_http_context_free(ctx);
                     RETURN_FALSE;
                 }
                 goto _skip_copy;

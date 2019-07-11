@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include "swoole_coroutine_scheduler.h"
+#include "php_swoole_cxx.h"
 #include "coroutine_c_api.h"
 
 #include <queue>
@@ -137,12 +137,9 @@ PHP_METHOD(swoole_coroutine_scheduler, set)
         zend_long max_num = zval_get_long(ztmp);
         PHPCoroutine::set_max_num(max_num <= 0 ? SW_DEFAULT_MAX_CORO_NUM : max_num);
     }
-    /**
-     * Runtime: hook php function
-     */
     if (php_swoole_array_get_value(vht, "hook_flags", ztmp))
     {
-        PHPCoroutine::enable_hook(zval_get_long(ztmp));
+        PHPCoroutine::config.hook_flags = zval_get_long(ztmp);
     }
     if (php_swoole_array_get_value(vht, "c_stack_size", ztmp) || php_swoole_array_get_value(vht, "stack_size", ztmp))
     {
@@ -258,7 +255,11 @@ static PHP_METHOD(swoole_coroutine_scheduler, start)
         php_swoole_fatal_error(E_WARNING, "scheduler is started, unable to execute %s->start", SW_Z_OBJCE_NAME_VAL_P(ZEND_THIS));
         RETURN_FALSE;
     }
-    php_swoole_reactor_init();
+    if (php_swoole_reactor_init() < 0)
+    {
+        RETURN_FALSE;
+    }
+
     s->started = true;
 
     if (!s->list)

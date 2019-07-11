@@ -693,7 +693,6 @@ int swServer_start(swServer *serv)
         return SW_ERR;
     }
     swServer_destory(serv);
-    serv->gs->start = 0;
     //remove PID file
     if (serv->pid_file)
     {
@@ -809,6 +808,8 @@ int swServer_shutdown(swServer *serv)
             swTimer_del(&SwooleG.timer, serv->master_timer);
             serv->master_timer = NULL;
         }
+        //ignore signal
+        reactor->signal_listener_num = 0;
     }
     else
     {
@@ -821,7 +822,6 @@ int swServer_shutdown(swServer *serv)
 static int swServer_destory(swServer *serv)
 {
     swTraceLog(SW_TRACE_SERVER, "release service");
-
     /**
      * shutdown workers
      */
@@ -884,7 +884,15 @@ static int swServer_destory(swServer *serv)
         serv->factory.free(&serv->factory);
     }
     swSignal_clear();
-    if (serv->gs->start > 0 && serv->onShutdown != NULL)
+    /**
+     * shutdown status
+     */
+    serv->gs->start = 0;
+    serv->gs->shutdown = 1;
+    /**
+     * callback
+     */
+    if (serv->onShutdown)
     {
         serv->onShutdown(serv);
     }
